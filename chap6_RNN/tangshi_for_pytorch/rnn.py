@@ -14,13 +14,13 @@ def weights_init(m):
         w_bound = np.sqrt(6. / (fan_in + fan_out))
         m.weight.data.uniform_(-w_bound, w_bound)
         m.bias.data.fill_(0)
-        print("inital  linear weight ")
+        print("initial  linear weight ")
 
 
 class word_embedding(nn.Module):
     def __init__(self,vocab_length , embedding_dim):
         super(word_embedding, self).__init__()
-        w_embeding_random_intial = np.random.uniform(-1,1,size=(vocab_length ,embedding_dim))
+        w_embeding_random_intial = np.random.uniform(-1,1,size=(vocab_length, embedding_dim))
         self.word_embedding = nn.Embedding(vocab_length,embedding_dim)
         self.word_embedding.weight.data.copy_(torch.from_numpy(w_embeding_random_intial))
     def forward(self,input_sentence):
@@ -43,28 +43,22 @@ class RNN_model(nn.Module):
         self.lstm_dim = lstm_hidden_dim
         #########################################
         # here you need to define the "self.rnn_lstm"  the input size is "embedding_dim" and the output size is "lstm_hidden_dim"
-        # the lstm should have two layers, and the  input and output tensors are provided as (batch, seq, feature)
-        # ???
-
-
-
+        # the lstm should have two layers, and the  input and output tensors are provided as (batch, seq, feature)        
+        self.rnn_lstm = nn.LSTM(input_size=embedding_dim, hidden_size=lstm_hidden_dim, num_layers=2, batch_first=True)
         ##########################################
-        self.fc = nn.Linear(lstm_hidden_dim, vocab_len )
+        self.fc = nn.Linear(lstm_hidden_dim, vocab_len)
         self.apply(weights_init) # call the weights initial function.
 
-        self.softmax = nn.LogSoftmax() # the activation function.
-        # self.tanh = nn.Tanh()
+        self.softmax = nn.LogSoftmax(dim=-1) # the activation function.
+
     def forward(self,sentence,is_test = False):
         batch_input = self.word_embedding_lookup(sentence).view(1,-1,self.word_embedding_dim)
-        # print(batch_input.size()) # print the size of the input
         ################################################
         # here you need to put the "batch_input"  input the self.lstm which is defined before.
         # the hidden output should be named as output, the initial hidden state and cell state set to zero.
-        # ???
-
-
-
-
+        h0 = torch.zeros(2, 1, self.lstm_dim)
+        c0 = torch.zeros(2, 1, self.lstm_dim)
+        output, (hn, cn) = self.rnn_lstm(batch_input, (h0, c0))
         ################################################
         out = output.contiguous().view(-1,self.lstm_dim)
 
